@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The King of the Dark Hall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IM+Fell+English:ital@0;1&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --burgundy: #2d0a0a;
+    --deep-red: #5c1a1a;
+    --gold: #c9973a;
+    --gold-light: #e8c56a;
+    --cream: #f5ead8;
+    --parchment: #ede0c4;
+    --ink: #1a0a05;
+    --gray-ink: #4a3728;
+    --aside-bg: #f0e6ce;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--burgundy);
+    background-image:
+      radial-gradient(ellipse at 20% 20%, #3d1010 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, #1a0505 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%232d0a0a'/%3E%3Ccircle cx='1' cy='1' r='0.6' fill='%23200808' opacity='0.6'/%3E%3C/svg%3E");
+    min-height: 100vh;
+    font-family: 'IM Fell English', serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ── Curtain intro ── */
+  #curtain {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex;
+    pointer-events: none;
+  }
+  .curtain-half {
+    width: 50%; height: 100%;
+    background: linear-gradient(to bottom, #1a0404 0%, #4a0e0e 40%, #2d0808 100%);
+    background-image:
+      repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(0,0,0,0.15) 18px, rgba(0,0,0,0.15) 20px),
+      linear-gradient(to bottom, #1a0404 0%, #4a0e0e 40%, #2d0808 100%);
+    transition: transform 1.6s cubic-bezier(0.76, 0, 0.24, 1);
+    transition-delay: 0.4s;
+  }
+  .curtain-half:first-child { transform-origin: left; }
+  .curtain-half:last-child  { transform-origin: right; }
+  .curtain-half::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0;
+    width: 30px;
+    background: linear-gradient(to right, transparent, rgba(201,151,58,0.25), transparent);
+  }
+  .curtain-half:first-child::after { right: 0; }
+  .curtain-half:last-child::after  { left: 0; }
+
+  body.ready .curtain-half:first-child { transform: translateX(-100%); }
+  body.ready .curtain-half:last-child  { transform: translateX(100%); }
+
+  /* ── Film grain overlay ── */
+  #grain {
+    position: fixed; inset: 0; z-index: 1;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    animation: grain-shift 0.12s steps(1) infinite;
+  }
+  @keyframes grain-shift {
+    0%  { transform: translate(0,0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(1px, -2px); }
+    75% { transform: translate(2px, 1px); }
+  }
+
+  /* ── Floating popcorn ── */
+  .popcorn-field {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+  }
+  .kernel {
+    position: absolute;
+    font-size: 1.4rem;
+    opacity: 0;
+    animation: float-up linear infinite;
+    filter: drop-shadow(0 0 4px rgba(201,151,58,0.4));
+  }
+  @keyframes float-up {
+    0%   { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.8); }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.3; }
+    100% { opacity: 0; transform: translateY(-110vh) rotate(720deg) scale(1.2); }
+  }
+
+  /* ── Main wrapper ── */
+  #wrapper {
+    position: relative; z-index: 2;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1.2s ease 1.8s, transform 1.2s ease 1.8s;
+  }
+  body.ready #wrapper { opacity: 1; transform: translateY(0); }
+
+  /* ── Book page ── */
+  .page {
+    background: var(--cream);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23p)' opacity='0.04'/%3E%3C/svg%3E"),
+      linear-gradient(to bottom right, #f7edd8, #ede0c4);
+    border: 1px solid rgba(201,151,58,0.3);
+    box-shadow:
+      0 0 0 6px var(--burgundy),
+      0 0 0 8px var(--gold),
+      0 0 0 10px var(--burgundy),
+      0 30px 80px rgba(0,0,0,0.8),
+      inset 0 0 60px rgba(0,0,0,0.04);
+    padding: 4rem 4.5rem 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page::before {
+    content: '';
+    position: absolute; inset: 18px;
+    border: 1px solid rgba(201,151,58,0.2);
+    pointer-events: none;
+  }
+
+  /* ── Corner ornaments ── */
+  .page::after {
+    content: '✦';
+    position: absolute; bottom: 28px; right: 36px;
+    color: var(--gold); opacity: 0.5; font-size: 1rem;
+  }
+  .corner { position: absolute; color: var(--gold); opacity: 0.45; font-size: 1.1rem; }
+  .corner.tl { top: 26px; left: 34px; }
+  .corner.tr { top: 26px; right: 34px; }
+  .corner.bl { bottom: 26px; left: 34px; }
+
+  /* ── Title block ── */
+  .title-block {
+    text-align: center;
+    padding: 1.5rem 0 2rem;
+    border-bottom: 1px solid rgba(201,151,58,0.35);
+    margin-bottom: 0.5rem;
+  }
+  .title-eyebrow {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--deep-red);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.05;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-bottom: 0.6rem;
+  }
+  .title-ornament {
+    color: var(--gold);
+    font-size: 1.4rem;
+    margin: 0.4rem 0;
+    display: block;
+    letter-spacing: 0.3em;
+  }
+  .subtitle {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--gray-ink);
+    margin-bottom: 0.3rem;
+  }
+  .version-tag {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.65rem;
+    color: var(--deep-red);
+    letter-spacing: 0.12em;
+    opacity: 0.65;
+  }
+
+  /* ── Body text ── */
+  .story-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.18rem;
+    line-height: 1.85;
+    color: var(--ink);
+    margin-bottom: 1.1rem;
+  }
+  .story-text em { font-style: italic; }
+  .story-text strong {
+    font-weight: 600;
+    color: var(--deep-red);
+  }
+
+  /* ── Section dividers ── */
+  .divider {
+    text-align: center;
+    margin: 2rem 0;
+    color: var(--gold);
+    font-size: 1rem;
+    letter-spacing: 0.5em;
+    opacity: 0.7;
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+    opacity: 0.5;
+  }
+
+  /* ── Snicket asides ── */
+  .aside {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--deep-red);
+    background: var(--aside-bg);
+    border-left: 3px solid var(--gold);
+    padding: 0.8rem 1.2rem 0.8rem 1.1rem;
+    margin: 1.4rem 0 1.4rem 1.5rem;
+    position: relative;
+    box-shadow: 2px 3px 12px rgba(0,0,0,0.08);
+    transform: rotate(0.4deg);
+  }
+  .aside::before {
+    content: '— the narrator';
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+    opacity: 0.8;
+  }
+
+  /* ── Noble list ── */
+  .noble-list {
+    list-style: none;
+    margin: 1.2rem 0 1.2rem 0.5rem;
+  }
+  .noble-list li {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.12rem;
+    line-height: 1.8;
+    color: var(--ink);
+    padding: 0.45rem 0 0.45rem 1.8rem;
+    border-bottom: 1px dashed rgba(201,151,58,0.2);
+    position: relative;
+  }
+  .noble-list li::before {
+    content: '❧';
+    position: absolute; left: 0;
+    color: var(--gold); opacity: 0.7;
+    font-size: 0.9rem; top: 0.55rem;
+  }
+  .noble-list li strong { color: var(--deep-red); font-weight: 600; }
+
+  /* ── Pull quote ── */
+  .pull-quote {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--deep-red);
+    margin: 2.2rem 1rem;
+    padding: 1.2rem 1.5rem;
+    border-top: 1px solid rgba(201,151,58,0.35);
+    border-bottom: 1px solid rgba(201,151,58,0.35);
+    position: relative;
+    line-height: 1.6;
+  }
+  .pull-quote::before { content: '\201C'; font-size: 3rem; color: var(--gold); opacity: 0.4; position: absolute; top: -0.5rem; left: 0.5rem; line-height: 1; }
+  .pull-quote::after  { content: '\201D'; font-size: 3rem; color: var(--gold); opacity: 0.4; position: absolute; bottom: -1.2rem; right: 0.5rem; line-height: 1; }
+
+  /* ── Section headings ── */
+  .section-head {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--deep-red);
+    text-align: center;
+    margin: 2.5rem 0 1.4rem;
+    opacity: 0.75;
+  }
+
+  /* ── Finale ── */
+  .finale {
+    text-align: center;
+    margin: 3rem 0 1rem;
+  }
+  .finale .long-live {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: var(--deep-red);
+    display: block;
+    margin-bottom: 1rem;
+  }
+  .finale .the-end {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--gray-ink);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .finale .postscript {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.9rem;
+    color: var(--gray-ink);
+    opacity: 0.75;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+  .finale .snicket-final {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.72rem;
+    color: var(--deep-red);
+    opacity: 0.65;
+    display: block;
+  }
+
+  /* ── Page number ── */
+  .page-footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(201,151,58,0.25);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.78rem;
+    color: var(--gray-ink);
+    opacity: 0.5;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Scroll reveal ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 600px) {
+    .page { padding: 2.5rem 2rem 3rem; }
+    h1 { font-size: 1.8rem; }
+    .aside { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Curtain -->
+<div id="curtain">
+  <div class="curtain-half"></div>
+  <div class="curtain-half"></div>
+</div>
+
+<!-- Film grain -->
+<div id="grain"></div>
+
+<!-- Floating popcorn -->
+<div class="popcorn-field" id="popcornField"></div>
+
+<!-- Main content -->
+<div id="wrapper">
+  <div class="page">
+    <span class="corner tl">✦</span>
+    <span class="corner tr">✦</span>
+    <span class="corner bl">✦</span>
+
+    <!-- Title -->
+    <div class="title-block reveal">
+      <p class="title-eyebrow">A tale from the Silver Screen</p>
+      <h1>The King of<br>the Dark Hall</h1>
+      <span class="title-ornament">❦ ✦ ❦</span>
+      <p class="subtitle">A Story for Those Who Know the Smell</p>
+      <p class="version-tag">Version II — with additional warnings from the narrator</p>
+    </div>
+
+    <!-- Opening -->
+    <div class="divider reveal">✦</div>
+
+    <p class="story-text reveal">In the land of the Silver Screen, where the lights go dim and the floor stays sticky forever, there lived a king.</p>
+
+    <p class="story-text reveal">He did not wear a golden crown. He did not sit on a velvet throne. He did not need to.</p>
+
+    <p class="story-text reveal">He was <em>Popcorn</em>, and he smelled of warm butter and something older than memory.</p>
+
+    <div class="aside reveal">The narrator would like to pause here to note that "something older than memory" is not a scientific measurement. It is, however, an accurate one.</div>
+
+    <!-- Hall of Nobles -->
+    <div class="divider reveal">✦</div>
+    <p class="section-head reveal">The Hall of Nobles</p>
+
+    <p class="story-text reveal">The Dark Hall was a peculiar kingdom. Every night, when the great machine clicked on and the enormous pictures began to move and roar and weep, the subjects filed in and chose their seats — the plush kind that reclined if you pushed them right, though sometimes they reclined whether you pushed them or not.</p>
+
+    <p class="story-text reveal">And in the kingdom, there was a Hall of Nobles. The children called it the Concession Stand. The adults called it the Concession Stand too, though they said it in a voice that suggested they would not be conceding anything.</p>
+
+    <p class="story-text reveal">The Nobles were very grand and knew it. This is a dangerous combination, as anyone who has met a Duke will tell you.</p>
+
+    <ul class="noble-list reveal">
+      <li><strong>Nachos, the Duke of Drama,</strong> arrived dripping in orange-yellow cheese — a word which here means "a substance that resembles cheese in color and ambition, but has made different choices" — and announced himself loudly. He always did.</li>
+      <li><strong>The Twisted Duchess Pretzel</strong> was gentler — warm and salt-dusted, bowing slightly to those who approached. She was the only Noble who ever bowed. This is either admirable or suspicious, depending on your experience with Duchesses.</li>
+      <li><strong>The Candy Alliance</strong> sent its ambassadors in crinkly wrappers: M&amp;M's, who were cheerful and meant well; Raisinets, who were optimistic in a way that the situation did not support; and those dreadful Sour Patch Children, who bit back.</li>
+      <li><strong>The Drink Lord</strong> sweated quietly in his enormous cup, hoping to be noticed. He was always noticed. He was simply never the <em>point</em>.</li>
+      <li><strong>The Slush Sorceress Icee</strong> spun her red and blue spells in the corner, cold and very pleased with herself. It is worth noting that the Sorceress offered two colors and no middle ground. Most kingdoms are like this, in the end.</li>
+      <li><strong>Chicken Tenders</strong> — golden mercenaries for hire — came with sauce and attitude and absolutely no allegiance to anyone.</li>
+      <li>And then, from deep in the Brinewood, arrived <strong>Pickle-in-a-Bag</strong>, who smelled like a dare. The narrator has encountered Pickle-in-a-Bag on three separate occasions and declines to elaborate.</li>
+    </ul>
+
+    <p class="story-text reveal">Each Noble bowed and beckoned. <em>Choose me</em>, they said with their wrappers and their gleam. <em>Choose me and your evening will be complete.</em></p>
+
+    <p class="story-text reveal">This is what Nobles always say. It is rarely true and never the whole story.</p>
+
+    <div class="pull-quote reveal">But none of them were the King.</div>
+
+    <!-- History -->
+    <div class="divider reveal">✦</div>
+    <p class="section-head reveal">The Rise of the Kernel Throne</p>
+
+    <p class="story-text reveal">Long ago — longer than the tallest grandmother can remember, which in some families is quite long indeed — the Dark Hall had no King at all.</p>
+
+    <p class="story-text reveal">The theaters were <em>serious</em> places. Snacks were not permitted. Snacks were for people with no refinement, the managers said, smoothing their mustaches. Crumbs were undignified. Chewing was rude.</p>
+
+    <div class="aside reveal">It should be said that the managers who banned snacks were also, in many documented cases, the managers who charged admission to see things that made grown adults cry in the dark. Their opinions on dignity deserve careful examination.</div>
+
+    <p class="story-text reveal">And so the people sat in hungry silence and watched stories unfold and felt nothing in their hands.</p>
+
+    <p class="story-text reveal">Then the Great Trouble came — the years when coins were scarce and bread cost too much and no one had anything to spare. Except Popcorn. Popcorn had always been there, small and humble, in kettles at the street corner, costing almost nothing.</p>
+
+    <p class="story-text reveal">The people brought him in.</p>
+
+    <p class="story-text reveal">The managers grumbled. The managers complained. The managers installed poppers and printed bags and watched the money come in and said nothing more about refinement.</p>
+
+    <p class="story-text reveal">Popcorn did not gloat. That was not his way. And frankly, he didn't need to.</p>
+
+    <p class="story-text reveal">He simply <em>stayed</em>.</p>
+
+    <!-- His power -->
+    <div class="divider reveal">✦</div>
+    <p class="section-head reveal">The Butter-Cloud Spell</p>
+
+    <p class="story-text reveal">Now here is what you must understand about the King, and the narrator urges you to pay attention because this is the important part:</p>
+
+    <p class="story-text reveal">He does not campaign for your loyalty. He does not flash or sizzle. He does not sparkle or drip or arrive with a sauce.</p>
+
+    <p class="story-text reveal">He only needs to enter the room.</p>
+
+    <p class="story-text reveal">The warm fog of him — the butter-cloud that drifts through the lobby like a spell no one cast on purpose — reaches you before he does. And your hands, which are very wise and have been paying attention far longer than the rest of you, begin to move toward him before your brain has finished saying, <em>I wasn't going to get anything tonight.</em></p>
+
+    <p class="story-text reveal">There is no use arguing with your hands.</p>
+
+    <p class="story-text reveal">Every child knows this. Most adults have forgotten and must be reminded. This story is, among other things, a reminder.</p>
+
+    <!-- The sensible ones -->
+    <div class="divider reveal">✦</div>
+
+    <p class="story-text reveal">You may try the other Nobles, of course. The narrator does not judge you. The narrator has tried the other Nobles.</p>
+
+    <p class="story-text reveal">You may say to yourself: <em>Just candy this time. Just nachos. Just a bottle of water, I'm being sensible.</em></p>
+
+    <p class="story-text reveal">You will be sensible for approximately four minutes. This is not a guess. This is a measurement.</p>
+
+    <p class="story-text reveal">Then the smell will find you in the dark, drifting over from three rows ahead where someone was not being sensible at all, and you will think: <em>Well. Perhaps next time I will be sensible. Perhaps next time.</em></p>
+
+    <p class="story-text reveal">There is never a next time. Not really. There is only the smell, and the hands, and the bucket.</p>
+
+    <!-- Sound sensitive -->
+    <div class="divider reveal">✦</div>
+    <p class="section-head reveal">A Note on the Sound-Sensitive Subjects</p>
+
+    <p class="story-text reveal">Not everyone loves the King the same way, and the narrator believes strongly in telling you this before you assume the story is simpler than it is.</p>
+
+    <p class="story-text reveal">Some poor souls — finely tuned, acutely sensitive — suffer terribly in his presence. Not from the taste or the smell, but from the <em>sound</em> of him. Each crunch, each rustling reach into the bucket, each enthusiastic kernel-crackle feels to these subjects like a small private thunder aimed directly at their ears.</p>
+
+    <div class="aside reveal">The narrator is, possibly, one of these souls. The narrator would prefer not to discuss it further.</div>
+
+    <p class="story-text reveal">The King does not mean them harm. But the King is who he is, and his rule has consequences. These sound-sensitive souls endure quietly, which is perhaps the bravest thing anyone does in the Dark Hall — a hall which, the narrator reminds you, is already asking quite a lot of everyone.</p>
+
+    <!-- Ending -->
+    <div class="divider reveal">✦</div>
+
+    <p class="story-text reveal">In the end, the Nobles of the Concession Stand go on jostling. Nachos drips. Pretzel sits patiently. The Sour Patch Children cause trouble, as they always do, in ways that will not be described here because this story already has enough going on.</p>
+
+    <p class="story-text reveal">But Popcorn —</p>
+
+    <p class="story-text reveal">Popcorn is the rustle during the trailers. The warm weight of the bucket passed between hands in the dark. The thing you eat even when the movie is not very good — and some movies, the narrator regrets to inform you, are not very good at all.</p>
+
+    <p class="story-text reveal">He is the smell that, twenty years later, returns you to a particular seat, a particular night, a particular feeling you cannot quite name and were perhaps not expecting to find again.</p>
+
+    <p class="story-text reveal">He doesn't need to be chosen.</p>
+
+    <p class="story-text reveal">He is already there, waiting, in the smell of the room.</p>
+
+    <div class="aside reveal">The narrator acknowledges that this is a story about popcorn. The narrator also believes that most important stories are about something that looks, at first, like a very small thing.</div>
+
+    <!-- Finale -->
+    <div class="divider reveal">❦ ✦ ❦</div>
+
+    <div class="finale reveal">
+      <span class="long-live">Long live the King.</span>
+      <span class="the-end">— The End —</span>
+      <span class="postscript">(And yes, you may have some.)</span>
+      <span class="snicket-final">(The Sour Patch Children may not.)</span>
+    </div>
+
+    <div class="page-footer reveal">
+      The King of the Dark Hall &ensp;·&ensp; Version II &ensp;·&ensp; With Snicket Additions
+    </div>
+  </div>
+</div>
+
+<script>
+  // Curtain open
+  window.addEventListener('load', () => {
+    setTimeout(() => document.body.classList.add('ready'), 100);
+  });
+
+  // Floating popcorn kernels
+  const field = document.getElementById('popcornField');
+  const emojis = ['🍿','🌽','✨','⭐'];
+  function spawnKernel() {
+    const k = document.createElement('span');
+    k.className = 'kernel';
+    k.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    k.style.left = Math.random() * 100 + 'vw';
+    k.style.bottom = '-60px';
+    const dur = 8 + Math.random() * 14;
+    const delay = Math.random() * 6;
+    k.style.animation = `float-up ${dur}s ${delay}s linear infinite`;
+    k.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+    field.appendChild(k);
+    setTimeout(() => k.remove(), (dur + delay) * 1000 + 2000);
+  }
+  for (let i = 0; i < 22; i++) spawnKernel();
+  setInterval(spawnKernel, 2200);
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 60);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
